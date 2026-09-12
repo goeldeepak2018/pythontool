@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form Automator</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; padding: 30px; gap: 30px; background: #f4f7f6; margin: 0; }
+        .column { flex: 1; padding: 25px; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: #333; font-size: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
+        input, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        input[readonly], textarea[readonly] { background-color: #e9ecef; color: #495057; }
+        button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; width: 100%; }
+        button:hover { background: #0056b3; }
+        .download-btn { background: #28a745; display: block; text-align: center; text-decoration: none; color: white; padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; }
+        .download-btn:hover { background: #218838; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
+        .status { margin-top: 15px; font-size: 14px; font-weight: bold; color: #28a745; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- COLUMN 1: CSV Controls -->
+    <div class="column">
+        <h2>1. Generate & Upload Data</h2>
+        
+        <!-- Dummy Data Download Button -->
+        <a href="/download-dummy" class="download-btn">📥 Download Dummy CSV (30 rows)</a>
+        
+        <hr>
+        
+        <!-- File Upload Section -->
+        <div class="form-group">
+            <label>Upload CSV File</label>
+            <input type="file" id="csvFile" accept=".csv">
+        </div>
+        <button onclick="uploadCSV()">🚀 Start Auto-Submission</button>
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <!-- COLUMN 2: Contact Form Preview -->
+    <div class="column">
+        <h2>2. Live Form Preview</h2>
+        <form id="contactForm">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="name" readonly placeholder="Auto-filled Name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" readonly placeholder="Auto-filled Email">
+            </div>
+            <div class="form-group">
+                <label>Mobile</label>
+                <input type="text" id="mobile" readonly placeholder="Auto-filled Mobile">
+            </div>
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" id="subject" readonly placeholder="Auto-filled Subject">
+            </div>
+            <div class="form-group">
+                <label>Comment</label>
+                <textarea id="comment" rows="4" readonly placeholder="Auto-filled Comment"></textarea>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function uploadCSV() {
+            let fileInput = document.getElementById('csvFile').files[0];
+            let statusDiv = document.getElementById('statusMessage');
+            
+            if (!fileInput) {
+                alert("Please select a CSV file first!");
+                return;
+            }
+
+            statusDiv.innerText = "Uploading and parsing CSV...";
+            statusDiv.style.color = "#007bff";
+
+            let formData = new FormData();
+            formData.append('file', fileInput);
+
+            fetch('/upload-csv', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    statusDiv.innerText = `Loaded ${data.total} records! Starting auto-fill...`;
+                    statusDiv.style.color = "#28a745";
+                    fillFormSequentially(data.records);
+                }
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                statusDiv.innerText = "Error uploading file!";
+                statusDiv.style.color = "red";
+            });
+        }
+
+        function fillFormSequentially(records) {
+            let index = 0;
+            let statusDiv = document.getElementById('statusMessage');
+
+            function nextRecord() {
+                if (index >= records.length) {
+                    statusDiv.innerText = "✅ All records processed successfully!";
+                    return;
+                }
+                
+                let r = records[index];
+                
+                // Form fields ko update karna
+                document.getElementById('name').value = r.Name;
+                document.getElementById('email').value = r.Email;
+                document.getElementById('mobile').value = r.Mobile;
+                document.getElementById('subject').value = r.Subject;
+                document.getElementById('comment').value = r.Comment;
+
+                statusDiv.innerText = `Processing row ${index + 1} of ${records.length}: ${r.Name}`;
+
+                // Yahan hum 1.5 seconds ka delay de rahe hain taaki animation jaisa feel ho
+                setTimeout(() => {
+                    index++;
+                    nextRecord();
+                }, 1500); 
+            }
+            
+            // Loop start karein
+            nextRecord();
+        }
+    </script>
+</body>
+</html>
