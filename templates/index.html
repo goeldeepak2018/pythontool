@@ -27,7 +27,7 @@
         <h2>1. Generate & Upload Data</h2>
         
         <!-- Dummy Data Download Button -->
-        <a href="/download-dummy" class="download-btn">📥 Download Dummy CSV (30 rows)</a>
+        <a href="download-dummy" class="download-btn">📥 Download Dummy CSV (30 rows)</a>
         
         <hr>
         
@@ -83,7 +83,7 @@
             let formData = new FormData();
             formData.append('file', fileInput);
 
-            fetch('/upload-csv', {
+            fetch('upload-csv', {
                 method: 'POST',
                 body: formData
             })
