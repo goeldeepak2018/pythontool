@@ -8,6 +8,44 @@ from email.message import EmailMessage
 app = Flask(__name__)
 fake = Faker()
 
+
+# Email bhejne ka reusable function
+def send_notification_email(subject, body):
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = 'info@qrinqr.com'
+    msg['To'] = 'dummy@safeportpass.com'  # Static target email
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP_SSL('mail.qrinqr.com', 465) as server:
+            server.login('info@qrinqr.com', 'AAPKA_ACTUAL_PASSWORD') 
+            server.send_message(msg)
+            print("Email sent successfully for row!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+# Aapka Form Submit Route (Naam apne hisaab se match kar lein, jaise /submit-form)
+@app.route('/submit-row', methods=['POST'])
+def submit_row():
+    # Frontend JS JSON bhej raha hai ya Form data, dono handle ho jayenge
+    data = request.json if request.is_json else request.form 
+    
+    # Email ki body dynamically generate karein
+    email_body = "New Row Submitted Details:\n\n"
+    for key, value in data.items():
+        email_body += f"{key.capitalize()}: {value}\n"
+        
+    # Trigger Email
+    send_notification_email(
+        subject="New Row Data from PythonTool",
+        body=email_body
+    )
+    
+    return jsonify({"status": "success", "message": "Row processed and email sent!"})
+
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -15,24 +53,7 @@ def index():
 # Dummy CSV Download Route (30 rows)
 @app.route('/download-dummy', methods=['GET'])
 
-def send_email(receiver_email, subject, body):
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = 'info@qrinqr.com'
-    msg['To'] = receiver_email
-    msg.set_content(body)
 
-    # PORT 465 ke liye SMTP_SSL use karna zaroori hai
-    try:
-        with smtplib.SMTP_SSL('mail.qrinqr.com', 465) as server:
-            # Apna actual email password yahan daalein
-            server.login('info@qrinqr.com', 'AAPKA_EMAIL_PASSWORD') 
-            server.send_message(msg)
-            print("Email successfully sent!")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-
-        
 def download_dummy():
     data = []
     mobiles = ["9412825702", "9811400087"]
