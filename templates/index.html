@@ -108,26 +108,42 @@
 
             function nextRecord() {
                 if (index >= records.length) {
-                    statusDiv.innerText = "✅ All records processed successfully!";
+                    statusDiv.innerText = "✅ All records processed and emails sent successfully!";
                     return;
                 }
                 
                 let r = records[index];
                 
-                // Form fields ko update karna
+                // 1. Form fields ko update karna (UI ke liye)
                 document.getElementById('name').value = r.Name;
                 document.getElementById('email').value = r.Email;
                 document.getElementById('mobile').value = r.Mobile;
                 document.getElementById('subject').value = r.Subject;
                 document.getElementById('comment').value = r.Comment;
 
-                statusDiv.innerText = `Processing row ${index + 1} of ${records.length}: ${r.Name}`;
+                statusDiv.innerText = `Sending email for row ${index + 1} of ${records.length}: ${r.Name}...`;
 
-                // Yahan hum 1.5 seconds ka delay de rahe hain taaki animation jaisa feel ho
-                setTimeout(() => {
-                    index++;
-                    nextRecord();
-                }, 1500); 
+                // 2. Data ko backend (Python) par bhejna taaki email trigger ho
+                fetch('submit-row', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(r) // Yeh automatically dictionary ban jayega Python mein
+                })
+                .then(res => res.json())
+                .then(data => {
+                    // Email successfully send hone ke baad 1.5 second ka delay aur next row
+                    setTimeout(() => {
+                        index++;
+                        nextRecord();
+                    }, 1500); 
+                })
+                .catch(err => {
+                    console.error("Error sending row:", err);
+                    statusDiv.innerText = `❌ Error sending email for ${r.Name}`;
+                    statusDiv.style.color = "red";
+                });
             }
             
             // Loop start karein

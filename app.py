@@ -28,6 +28,7 @@ def send_notification_email(subject, body):
 # Aapka Form Submit Route (Naam apne hisaab se match kar lein, jaise /submit-form)
 @app.route('/submit-row', methods=['POST'])
 def submit_row():
+    data = request.json
     # Frontend JS JSON bhej raha hai ya Form data, dono handle ho jayenge
     data = request.json if request.is_json else request.form 
     
