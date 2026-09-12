@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, send_file, jsonify
 import pandas as pd
 from faker import Faker
 import io
+import smtplib
+from email.message import EmailMessage
 
 app = Flask(__name__)
 fake = Faker()
@@ -12,6 +14,25 @@ def index():
 
 # Dummy CSV Download Route (30 rows)
 @app.route('/download-dummy', methods=['GET'])
+
+def send_email(receiver_email, subject, body):
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = 'info@qrinqr.com'
+    msg['To'] = receiver_email
+    msg.set_content(body)
+
+    # PORT 465 ke liye SMTP_SSL use karna zaroori hai
+    try:
+        with smtplib.SMTP_SSL('mail.qrinqr.com', 465) as server:
+            # Apna actual email password yahan daalein
+            server.login('info@qrinqr.com', 'AAPKA_EMAIL_PASSWORD') 
+            server.send_message(msg)
+            print("Email successfully sent!")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+        
 def download_dummy():
     data = []
     mobiles = ["9412825702", "9811400087"]
