@@ -26,9 +26,8 @@ def download_dummy():
         })
     
     df = pd.DataFrame(data)
-    output = io.BytesIO()
-    df.to_csv(output, index=False)
-    output.seek(0)
+    csv_data = df.to_csv(index=False)
+    output = io.BytesIO(csv_data.encode('utf-8'))
     
     return send_file(
         output,
