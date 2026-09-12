@@ -19,7 +19,7 @@ def send_notification_email(subject, body):
 
     try:
         with smtplib.SMTP_SSL('mail.qrinqr.com', 465) as server:
-            server.login('info@qrinqr.com', 'AAPKA_ACTUAL_PASSWORD') 
+            server.login('info@qrinqr.com', 'ODod@1234$#') 
             server.send_message(msg)
             print("Email sent successfully for row!")
     except Exception as e:
