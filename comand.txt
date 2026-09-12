@@ -1,0 +1,35 @@
+=========================================
+PYTHON FLASK - SERVER COMMANDS CHEAT SHEET
+=========================================
+
+1. FOLDER MEIN JANA AUR ENVIRONMENT ACTIVE KARNA
+-----------------------------------------
+cd /opt/pythontool
+source venv/bin/activate
+
+2. NAYA CODE GITHUB SE PULL KARNA
+-----------------------------------------
+git pull origin main
+
+3. APP KO BACKGROUND MEIN CHALANA (24/7 Live)
+-----------------------------------------
+nohup python app.py > app.log 2>&1 &
+
+4. LIVE LOGS DEKHNA (Errors ya Prints check karne ke liye)
+-----------------------------------------
+tail -f app.log
+(Logs se bahar aane ke liye: Ctrl + C dabayein)
+
+5. BACKGROUND MEIN CHAL RAHI APP KO ROKNA (Stop/Kill)
+-----------------------------------------
+pkill -f "python app.py"
+
+
+=========================================
+CODE UPDATE KARNE KA FULL WORKFLOW:
+=========================================
+Agar aapne VS Code se naya code push kiya hai aur server par update karna hai:
+
+Step 1: pkill -f "python app.py"               (Purani app rokein)
+Step 2: git pull origin main                   (Naya code server par layein)
+Step 3: nohup python app.py > app.log 2>&1 &   (App ko wapas background mein start karein)
