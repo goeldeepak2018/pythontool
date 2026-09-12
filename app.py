@@ -4,6 +4,9 @@ from faker import Faker
 import io
 import smtplib
 from email.message import EmailMessage
+import urllib.parse
+import random
+import requests
 
 app = Flask(__name__)
 fake = Faker()
@@ -96,6 +99,72 @@ def upload_csv():
         'records': records
     })
 
+
+
+# 1. Naya SMS Tool Page Route
+@app.route('/sms-tool')
+def sms_tool():
+    return render_template('sms.html')
+
+# 2. 10 Numbers ki Dummy CSV Download karne ka Route
+@app.route('/download-sms-dummy')
+def download_sms_dummy():
+    # Gaurav aur Deepak ke numbers ke sath 10 rows ka data
+    data = [
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+        {"Name": "Gaurav", "Mobile": "9811400087"},
+        {"Name": "Deepak", "Mobile": "9412825702"},
+    ]
+    
+    # Baaki 8 rows dummy numbers se bharne ke liye
+    #for i in range(3, 11):
+    #data.append({"Name": f"User {i}", "Mobile": f"99999999{i:02d}"})
+        
+    df_sms = pd.DataFrame(data)
+    csv_data = df_sms.to_csv(index=False)
+    output = io.BytesIO(csv_data.encode('utf-8'))
+    return send_file(output, mimetype='text/csv', as_attachment=True, download_name='sms_dummy_10.csv')
+
+# 3. SMS Bhejne ka logic (Aapki PHP API ke hisaab se)
+@app.route('/send-sms', methods=['POST'])
+def send_sms():
+    data = request.json if request.is_json else request.form
+    mobile = data.get('Mobile', '')
+
+    if not mobile:
+        return jsonify({"status": "error", "message": "Mobile number missing"})
+
+    # OTP generate karna (6-digit random number)
+    otp = str(random.randint(100000, 999999))
+    
+    # Message banakar URL Encode karna (PHP ke urlencode() ki tarah)
+    msg = f"Your US OTP is :: {otp}  का उपयोग करने के लिए धन्यवाद. Regards, Certisafe."
+    encoded_msg = urllib.parse.quote(msg)
+    
+    # PHP wali same API URL
+    url = f"http://smsapi.24x7sms.com/api_2.0/SendUnicodeSMS.aspx?APIKEY=CU3IvoEQ8CU&MobileNo={mobile}&SenderID=VRSAFE&Message={encoded_msg}&ServiceName=TEMPLATE_BASED&DLTTemplateID=1007917856946451195"
+    
+    try:
+        # GET request call (PHP curl ki jagah)
+        response = requests.get(url)
+        print(f"API Response for {mobile}: {response.text}")
+        return jsonify({"status": "success", "message": f"SMS sent to {mobile}"})
+    except Exception as e:
+        print(f"SMS Error: {e}")
+        return jsonify({"status": "error", "message": str(e)})
+
+    
 if __name__ == '__main__':
     # host='0.0.0.0' zaroori hai taaki Docker ke bahar browser mein access ho sake
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SMS Automator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 30px; background: #f4f7f6; }
+        .container { max-width: 600px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        input[type="file"], button, input[type="text"] { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .status { margin-top: 15px; font-weight: bold; text-align: center; color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>SMS Automator (Max 10 Numbers)</h2>
+        <a href="download-sms-dummy" style="background: #28a745; display: block; text-align: center; text-decoration: none; color: white; padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold;">📥 Download 10 Numbers CSV</a>
+        <label>Upload Mobile Numbers CSV (Column must be named 'Mobile')</label>
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="uploadCSV()">🚀 Start SMS Campaign</button>
+        
+        <hr>
+        <label>Current Number Processing:</label>
+        <input type="text" id="mobilePreview" readonly placeholder="Waiting for CSV...">
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <script>
+        function uploadCSV() {
+            let fileInput = document.getElementById('csvFile').files[0];
+            let statusDiv = document.getElementById('statusMessage');
+            
+            if (!fileInput) return alert("Please select a CSV file first!");
+
+            let formData = new FormData();
+            formData.append('file', fileInput);
+
+            fetch('upload-csv', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // Sirf pehli 10 rows ko process karne ki limit
+                    let recordsToProcess = data.records.slice(0, 10); 
+                    statusDiv.innerText = `Starting SMS for ${recordsToProcess.length} numbers...`;
+                    sendSmsSequentially(recordsToProcess);
+                }
+            });
+        }
+
+        function sendSmsSequentially(records) {
+            let index = 0;
+            let statusDiv = document.getElementById('statusMessage');
+
+            function nextRecord() {
+                if (index >= records.length) {
+                    statusDiv.innerText = "✅ SMS Campaign Completed!";
+                    return;
+                }
+                
+                let r = records[index];
+                document.getElementById('mobilePreview').value = r.Mobile;
+                statusDiv.innerText = `Sending SMS ${index + 1} of ${records.length}...`;
+
+                fetch('send-sms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(r)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    setTimeout(() => {
+                        index++;
+                        nextRecord();
+                    }, 1500); // 1.5 second delay per SMS
+                });
+            }
+            nextRecord();
+        }
+    </script>
+</body>
+</html>
